@@ -17,10 +17,11 @@ idea-sprint/
   config/sources.md     where to gather — CURATE
   config/rubric.md      scoring dimensions + weights — TUNE
   data/pain-schema.md   the pain entry format
-  data/pain-log.jsonl   append-only structured pains (grows daily)
-  data/shortlist.md     running ranked candidates (re-ranked daily)
-  data/reflection.md    "tomorrow's focus" note (steers next run)
-  data/daily/           per-day digests
+  data/pain-log.jsonl   append-only structured pains (grows daily) — local only
+  data/shortlist.md     running ranked candidates (re-ranked daily) — local only
+  data/reflection.md    "tomorrow's focus" note (steers next run) — local only
+  data/daily/           per-day digests — local only
+  data/*.template.md    empty starting points for a fresh clone
   dashboard/            React app — browse ranked ideas
   dashboard-vue/        Vue app — browse job proposals
   home/                 link hub for both dashboards
@@ -37,6 +38,19 @@ idea-sprint/
    rate limits. HN works immediately with no key.
 5. In a Cowork conversation type `/schedule`, paste the contents of
    `task-prompt.md`, and set a DAILY cadence at a time your machine is on.
+
+On a fresh clone, copy the data templates before the first run:
+
+```bash
+cp data/shortlist.template.md data/shortlist.md
+cp data/reflection.template.md data/reflection.md
+touch data/pain-log.jsonl
+cp dashboard/src/data/ideas.example.js dashboard/src/data/ideas.js
+cp dashboard-vue/public/data/jobs.example.json dashboard-vue/public/data/jobs.json
+```
+
+Sprint and dashboard run data is gitignored — it stays local and is never
+committed.
 
 ## Day 1: calibrate before you trust the schedule
 Run the task ON-DEMAND once and watch it. Check: did it gather enough? is the
