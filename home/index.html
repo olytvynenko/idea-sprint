@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <title>Dashboards</title>
+  <title>Idea Sprint</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -30,13 +30,12 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Dashboards</h1>
+    <h1>Idea Sprint</h1>
     <div class="list" id="list"></div>
   </div>
   <script>
     const apps = [
-      { name: 'Idea Sprint', desc: 'Ranked project ideas · Day 1', port: 4001, url: 'http://localhost:4001' },
-      { name: 'Job Proposals', desc: 'freelancermap · fit scoring + drafts', port: 4002, url: 'http://localhost:4002' },
+      { name: 'Ideas Dashboard', desc: 'Ranked project ideas · scores & validation', port: 4001, url: 'http://localhost:4001' },
     ]
     const list = document.getElementById('list')
     apps.forEach(app => {

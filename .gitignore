@@ -8,6 +8,5 @@ data/shortlist.md
 data/reflection.md
 data/daily/*.md
 
-# Dashboard run data (exported or written by scheduled tasks)
+# Dashboard run data (exported from sprint output)
 dashboard/src/data/ideas.js
-dashboard-vue/public/data/jobs.json

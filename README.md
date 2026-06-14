@@ -25,8 +25,7 @@ idea-sprint/
   data/daily/           per-day digests — local only
   data/*.template.md    empty starting points for a fresh clone
   dashboard/            React app — browse ranked ideas
-  dashboard-vue/        Vue app — browse job proposals
-  home/                 link hub for both dashboards
+  home/                 link to the ideas dashboard
   build-all.sh          build dashboards and start/restart PM2
   pm2.config.js         PM2 process definitions
 ```
@@ -50,7 +49,6 @@ cp data/shortlist.template.md data/shortlist.md
 cp data/reflection.template.md data/reflection.md
 touch data/pain-log.jsonl
 cp dashboard/src/data/ideas.example.js dashboard/src/data/ideas.js
-cp dashboard-vue/public/data/jobs.example.json dashboard-vue/public/data/jobs.json
 ```
 
 Sprint and dashboard run data is gitignored — it stays local and is never
@@ -61,19 +59,18 @@ Run the task ON-DEMAND once and watch it. Check: did it gather enough? is the
 extraction clean and on-schema? is dedupe too loose/strict? Adjust the prompt or
 configs, then let the daily schedule take over for days 2–7.
 
-## Dashboards
+## Dashboard
 
-Two local web dashboards let you browse sprint output without reading markdown
-files. A home page links to both.
+A local web dashboard lets you browse sprint output without reading markdown files.
+The home page on port 4000 links to the ideas dashboard.
 
-| URL | App | What it shows |
-|-----|-----|---------------|
-| http://localhost:4000 | Home | Links to both dashboards |
-| http://localhost:4001 | Idea Sprint (React) | Ranked ideas with scores, validation notes, competitors |
-| http://localhost:4002 | Job Proposals (Vue) | freelancermap proposals with fit scores and draft replies |
+| URL | What it shows |
+|-----|---------------|
+| http://localhost:4000 | Home — link to ideas dashboard |
+| http://localhost:4001 | Ranked ideas with scores, validation notes, competitors |
 
 There is no backend API — PM2 serves static files only. The Cowork task writes
-data to disk; the dashboards read it.
+data to disk; the dashboard reads it.
 
 ### Prerequisites
 
@@ -88,8 +85,8 @@ From the project root:
 ./build-all.sh
 ```
 
-This installs dependencies, builds both dashboards, and starts (or restarts) PM2.
-Open http://localhost:4000 in your browser.
+This installs dependencies, builds the dashboard, and starts (or restarts) PM2.
+Open http://localhost:4000 or http://localhost:4001 in your browser.
 
 To start manually without rebuilding:
 
@@ -108,35 +105,28 @@ pm2 startup && pm2 save   # auto-start on login (optional)
 
 ### Dev mode (hot reload)
 
-For UI work, run each dashboard separately instead of PM2:
+For UI work, run the dashboard with hot reload instead of PM2:
 
 ```bash
 cd dashboard && npm install && npm run dev       # http://localhost:5173
-cd dashboard-vue && npm install && npm run dev     # http://localhost:5174
 ```
 
 Dev mode does not start the home page on port 4000.
 
-### Using the dashboards
+### Using the dashboard
 
-**Idea Sprint** — search, filter by theme, sort by rank/score/asset-fit/demand.
-Click a card to expand score breakdown, competitors, gap, and validation notes.
-
-**Job Proposals** — filter by minimum score, show new only, sort by date or
-score. Click a card to expand stack requirements, gaps, recommended action, and
-a draft reply message. The app polls `jobs.json` every 2 minutes; hit Refresh
-to reload immediately.
+Search, filter by theme, sort by rank/score/asset-fit/demand. Click a card to
+expand score breakdown, competitors, gap, and validation notes.
 
 ### Keeping data in sync
 
-The dashboards do not auto-sync from the Cowork sprint output.
+The dashboard does not auto-sync from the Cowork sprint output.
 
-| Dashboard | Data source | How to update |
-|-----------|-------------|---------------|
-| Idea Sprint | `dashboard/src/data/ideas.js` | Export from `data/shortlist.md`, then `./build-all.sh` |
-| Job Proposals | `dashboard-vue/public/data/jobs.json` | Written by the jobs Cowork task; rebuild, or copy to `dashboard-vue/dist/data/jobs.json` for a live reload without rebuild |
+| Data | How to update |
+|------|---------------|
+| `dashboard/src/data/ideas.js` | Export from `data/shortlist.md`, then `./build-all.sh` |
 
-After updating ideas data, always run `./build-all.sh` (or at least `npm run build`
+After updating ideas data, run `./build-all.sh` (or at least `npm run build`
 in `dashboard/` and `pm2 restart ideas`).
 
 ## Things to remember

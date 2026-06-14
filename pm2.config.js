@@ -23,13 +23,5 @@ module.exports = {
       watch: false,
       autorestart: true,
     },
-    {
-      name: 'jobs',
-      script: 'npx',
-      args: 'vite preview --port 4002 --host',
-      cwd: './dashboard-vue',
-      watch: false,
-      autorestart: true,
-    },
   ],
 }

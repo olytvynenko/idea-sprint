@@ -5,9 +5,6 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 echo "==> Building ideas dashboard (React)..."
 cd "$ROOT/dashboard" && npm install && npm run build
 
-echo "==> Building jobs dashboard (Vue)..."
-cd "$ROOT/dashboard-vue" && npm install && npm run build
-
 echo "==> Restarting PM2..."
 cd "$ROOT"
 if pm2 list | grep -q 'online'; then
@@ -19,5 +16,4 @@ fi
 echo ""
 echo "Done."
 echo "  Ideas:  http://localhost:4001"
-echo "  Jobs:   http://localhost:4002"
 echo "  Home:   http://localhost:4000"
