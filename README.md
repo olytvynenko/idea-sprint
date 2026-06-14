@@ -13,6 +13,7 @@ daily digest and tomorrow's focus. (Full instruction: `task-prompt.md`.)
 ```
 idea-sprint/
   task-prompt.md        the daily instruction (paste into /schedule)
+  assets-prompt.md      regenerate config/assets.md from profile/ (on demand)
   config/assets.md      your strengths (drives asset-fit scoring) — EDIT
   config/sources.md     where to gather — CURATE
   config/rubric.md      scoring dimensions + weights — TUNE
@@ -34,6 +35,8 @@ idea-sprint/
 1. Put this folder on disk and open Claude Desktop → Cowork.
 2. Point Cowork at this folder as the working directory.
 3. Edit `config/assets.md`, curate `config/sources.md`, tune `config/rubric.md`.
+   After updating files in `profile/`, run `assets-prompt.md` on demand in Cowork
+   to regenerate `config/assets.md`.
 4. Optional: register a Stack Exchange app at https://stackapps.com/apps/oauth/register
    (takes ~2 minutes, no approval) and note the key in sources.md for higher
    rate limits. HN works immediately with no key.
