@@ -7,7 +7,9 @@ one focused pass.
 
 ## Step 0 — Load state (always do this first)
 Read these files before doing anything else:
-- `config/assets.md` — what the builder can build unusually well
+- `config/assets.md` — distilled strengths used for scoring (primary)
+- `profile/profile.md` — full professional background; skim `profile/*.md` for
+  Linxact-specific depth when asset-fit is close
 - `config/sources.md` — where to gather, and rotation guidance
 - `config/rubric.md` — how to score candidates
 - `data/pain-schema.md` — the exact format for a pain entry

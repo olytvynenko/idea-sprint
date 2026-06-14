@@ -16,6 +16,7 @@ idea-sprint/
   config/assets.md      your strengths (drives asset-fit scoring) — EDIT
   config/sources.md     where to gather — CURATE
   config/rubric.md      scoring dimensions + weights — TUNE
+  profile/              CV summary + Linxact repo deep dives (reference)
   data/pain-schema.md   the pain entry format
   data/pain-log.jsonl   append-only structured pains (grows daily) — local only
   data/shortlist.md     running ranked candidates (re-ranked daily) — local only
