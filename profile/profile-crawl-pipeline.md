@@ -94,7 +94,7 @@ The Crawl Pipeline is a sophisticated AWS-based infrastructure-as-code project t
 - Sitemap crawl output: ~300 GB
 - URL crawl output: ~700 GB
 - Total S3 storage footprint: ~1.5 TB (+ intermediate shuffle data)
-- Glue shuffle bucket: `linxact-glue-shuffle` (dedicated S3 staging for Spark shuffle operations)
+- Glue shuffle bucket: `crawl-glue-shuffle` (dedicated S3 staging for Spark shuffle operations)
 
 **Concurrency and Scaling:**
 - Maximum EKS worker nodes per crawl stage: 1,000 (configurable via MAX_INSTANCES in kube_job.py)

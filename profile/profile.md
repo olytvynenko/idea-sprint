@@ -1,12 +1,12 @@
-# Alex — Professional Profile
+# Builder — Professional Profile
 
-_Last updated: 2026-06-02_
+_Last updated: 2026-06-02. Company and product names anonymized._
 
 ---
 
 ## Summary
 
-Senior software engineer, 10+ years. Sole developer at a small SEO company (Linxact), owning everything from frontend to infrastructure. Built and operated a production web-scale data platform — distributed crawler, AWS data engineering pipeline (billions of records, Delta Lake, Athena), multi-region EKS infrastructure, and SaaS product — entirely solo. Currently deepening expertise in AI/LLM tooling and agentic systems.
+Senior software engineer, 10+ years. Sole developer at a small SEO/data company, owning everything from frontend to infrastructure. Built and operated a production web-scale data platform — distributed crawler, AWS data engineering pipeline (billions of records, Delta Lake, Athena), multi-region EKS infrastructure, and SaaS product — entirely solo. Currently deepening expertise in AI/LLM tooling and agentic systems.
 
 ---
 
@@ -53,15 +53,15 @@ Designed and built a distributed web crawler and data platform from scratch, alo
 - EKS at scale: batch workloads, orchestration, reliability, operational automation.
 - Force-destroy capability with AWS API-level cleanup (not just Terraform).
 
-### Linxact SaaS product (full-stack)
+### SaaS product (full-stack)
 
 - **Backend**: Serverless GraphQL API (AWS Lambda, Python 3.9) with 50+ mutations/queries routing to Athena.
-- **Frontend**: Next.js 14 App Router SaaS targeting iGaming SEO vertical; Stripe subscription integration; geolocation-based pricing (Cloudflare `CF-IPCountry`); Cognito auth; 41 API routes.
+- **Frontend**: Next.js 14 App Router SaaS targeting a B2B SEO vertical; Stripe subscription integration; geolocation-based pricing (Cloudflare `CF-IPCountry`); Cognito auth; 41 API routes.
 - **Data model**: multiple Athena table variants (hidden/non-hidden backlinks, sitemaps, WordPress imports, redirect chains); partition strategy consistent across all queries.
 
 ### AI / LLM tooling (active)
 
-- Built an AI-powered website modernisation pipeline ("Wayback to the Future" / linxact-build): 6-phase pipeline using Claude Agent SDK, Playwright, Astro, Tailwind CSS.
+- Built an AI-powered website modernisation pipeline: 6-phase pipeline using Claude Agent SDK, Playwright, Astro, Tailwind CSS.
 - `build_validator.py` (2,775 lines): AI-powered pre/post-build error detection and fixing; parses npm/TypeScript errors and applies targeted fixes.
 - Fluent with agentic tool use, Claude Code, MCP, prompt engineering.
 - Treats AI as an unreliable component — validation, retries, evals.
@@ -90,7 +90,7 @@ Designed and built a distributed web crawler and data platform from scratch, alo
 
 ### SEO and large-scale web data (10+ years)
 
-- Built the full data platform behind a backlink/SEO intelligence product (Linxact Lens): crawler → pipeline → API → SaaS, all solo.
+- Built the full data platform behind a backlink/SEO intelligence SaaS: crawler → pipeline → API → product UI, all solo.
 - Deep familiarity with how search engines crawl, index, and rank content.
 - Understands buyer language and pain points of SEO teams and digital agencies.
 - Relevant emerging area: AI answer engine visibility (LLM SEO) — brands invisible in ChatGPT/Perplexity despite ranking on Google.
@@ -149,4 +149,4 @@ Solo, end-to-end. Designed and operated production systems alone — from Kubern
 **Backend**: .NET Core, C#, Python, GraphQL, REST, Serverless  
 **Frontend**: Next.js 14, React, Angular, Tailwind CSS (full-stack capable, not primary)  
 **Languages**: C#, Python, Scala  
-**Domain**: SEO, backlink intelligence, large-scale web data, iGaming vertical
+**Domain**: SEO, backlink intelligence, large-scale web data, B2B SEO SaaS
