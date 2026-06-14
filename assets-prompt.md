@@ -11,7 +11,7 @@ Work entirely inside this project folder. One focused pass.
 Read ALL of these before writing anything:
 
 - `profile/profile.md` — master summary (primary)
-- every `profile/profile-*.md` — Linxact repo deep dives; mine for concrete
+- every `profile/profile-*.md` — crawl/infra repo deep dives; mine for concrete
   scale numbers, rare combinations, and defensible edges
 - `config/assets.md` — current file (preserve section structure unless a section
   is clearly outdated)
