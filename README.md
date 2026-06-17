@@ -14,6 +14,8 @@ daily digest and tomorrow's focus. (Full instruction: `task-prompt.md`.)
 idea-sprint/
   task-prompt.md        the daily instruction (paste into /schedule)
   assets-prompt.md      regenerate config/assets.md from profile/ (on demand)
+  scripts/              ingest.js (shortlist → SQLite), db.js, parse-shortlist.js
+  server/               Express API serving SQLite + the built dashboard
   config/assets.md      your strengths (drives asset-fit scoring) — EDIT
   config/sources.md     where to gather — CURATE
   config/rubric.md      scoring dimensions + weights — TUNE
@@ -23,11 +25,12 @@ idea-sprint/
   data/shortlist.md     running ranked candidates (re-ranked daily) — local only
   data/reflection.md    "tomorrow's focus" note (steers next run) — local only
   data/daily/           per-day digests — local only
+  data/idea-sprint.db   SQLite store of every dated run — local only
   data/*.template.md    empty starting points for a fresh clone
-  dashboard/            React app — browse ranked ideas
+  dashboard/            React app — current ideas + calendar of past runs
   home/                 link to the ideas dashboard
-  build-all.sh          build dashboards and start/restart PM2
-  pm2.config.js         PM2 process definitions
+  build-all.sh          install, build dashboard, ingest, start/restart PM2
+  pm2.config.cjs        PM2 process definitions
 ```
 
 ## Setup (one time)
@@ -48,8 +51,10 @@ On a fresh clone, copy the data templates before the first run:
 cp data/shortlist.template.md data/shortlist.md
 cp data/reflection.template.md data/reflection.md
 touch data/pain-log.jsonl
-cp dashboard/src/data/ideas.example.js dashboard/src/data/ideas.js
 ```
+
+The SQLite database (`data/idea-sprint.db`) is created automatically the first
+time you run `node scripts/ingest.js` (or `./build-all.sh`).
 
 Sprint and dashboard run data is gitignored — it stays local and is never
 committed.
@@ -61,16 +66,25 @@ configs, then let the daily schedule take over for days 2–7.
 
 ## Dashboard
 
-A local web dashboard lets you browse sprint output without reading markdown files.
-The home page on port 4000 links to the ideas dashboard.
+A local web dashboard shows the **current run** (latest ingest) as a grid of
+scored idea cards. A **calendar** highlights every day that has a stored run —
+click a day to view that run's ideas, or hit **Current** to jump back to the
+latest. Click any card for its score breakdown and validation note.
 
 | URL | What it shows |
 |-----|---------------|
 | http://localhost:4000 | Home — link to ideas dashboard |
-| http://localhost:4001 | Ranked ideas with scores, validation notes, competitors |
+| http://localhost:4001 | Current ideas + calendar of historical runs |
 
-There is no backend API — PM2 serves static files only. The Cowork task writes
-data to disk; the dashboard reads it.
+Runs are **on demand**: each ingest imports `data/shortlist.md` into SQLite as a
+dated run, so history is kept. Data flow:
+
+```
+data/shortlist.md  →  node scripts/ingest.js  →  data/idea-sprint.db  →  Express API (:4001)  →  dashboard
+```
+
+The dashboard reads the API directly, so a new run shows up after the next
+ingest (use the Refresh button) — no rebuild needed.
 
 ### Prerequisites
 
@@ -85,49 +99,56 @@ From the project root:
 ./build-all.sh
 ```
 
-This installs dependencies, builds the dashboard, and starts (or restarts) PM2.
-Open http://localhost:4000 or http://localhost:4001 in your browser.
+This installs dependencies, builds the dashboard, ingests the current shortlist
+into SQLite, and starts (or restarts) PM2. Open http://localhost:4000 or
+http://localhost:4001.
+
+PM2 processes: `home` (link hub) and `api` (Express serving the API + dashboard).
 
 To start manually without rebuilding:
 
 ```bash
-pm2 start pm2.config.js
+pm2 start pm2.config.cjs
 ```
 
 Useful PM2 commands:
 
 ```bash
-pm2 stop all          # stop all dashboards
-pm2 restart all       # restart after a rebuild
-pm2 logs              # view process output
+pm2 stop all          # stop everything
+pm2 restart all       # restart after a dashboard rebuild
+pm2 logs api          # watch API activity
 pm2 startup && pm2 save   # auto-start on login (optional)
 ```
 
 ### Dev mode (hot reload)
 
-For UI work, run the dashboard with hot reload instead of PM2:
+For UI work, run the API and the Vite dev server side by side:
 
 ```bash
+node server/index.js                             # API on :4001
 cd dashboard && npm install && npm run dev       # http://localhost:5173
 ```
 
-Dev mode does not start the home page on port 4000.
+The dev server proxies `/api` to the API on :4001.
 
-### Using the dashboard
+### Recording a run
 
-Search, filter by theme, sort by rank/score/asset-fit/demand. Click a card to
-expand score breakdown, competitors, gap, and validation notes.
+After Cowork updates `data/shortlist.md`, store it as today's run:
 
-### Keeping data in sync
+```bash
+node scripts/ingest.js            # stores under today's date
+node scripts/ingest.js --date 2026-06-14   # or backfill a specific date
+```
 
-The dashboard does not auto-sync from the Cowork sprint output.
+Re-running for the same date replaces that day's ideas. Cowork Step 6 runs
+`node scripts/ingest.js` automatically after each daily digest.
 
-| Data | How to update |
-|------|---------------|
-| `dashboard/src/data/ideas.js` | Export from `data/shortlist.md`, then `./build-all.sh` |
+### Admin
 
-After updating ideas data, run `./build-all.sh` (or at least `npm run build`
-in `dashboard/` and `pm2 restart ideas`).
+The dashboard header has an **Admin** tab with a plain-text editor for the three
+scoring config files (`config/assets.md`, `config/sources.md`, `config/rubric.md`).
+Changes are saved to disk immediately and take effect on the next Cowork run /
+ingest — no restart needed.
 
 ## Things to remember
 - **Local execution.** Cowork scheduled tasks run only while the machine is awake
