@@ -3,6 +3,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import express from 'express'
 import { openDb, ROOT } from '../scripts/db.js'
+import { ingest, getIngestStatus } from '../scripts/ingest.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = process.env.PORT || 4001
@@ -110,6 +111,25 @@ app.get('/api/runs/:date', (req, res) => {
   const run = db.prepare('SELECT * FROM runs WHERE run_date = ?').get(req.params.date)
   if (!run) return res.status(404).json({ error: `no run for ${req.params.date}` })
   res.json(runPayload(run))
+})
+
+app.get('/api/ingest/status', (req, res) => {
+  try {
+    res.json(getIngestStatus())
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.post('/api/ingest', (req, res) => {
+  try {
+    const force = req.body?.force === true
+    const result = ingest({ force })
+    if (!result) return res.status(400).json({ error: 'nothing to ingest — is data/shortlist.md populated?' })
+    res.json({ ok: true, ...result })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 app.use(express.static(DIST_DIR))

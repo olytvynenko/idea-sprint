@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import styles from './App.module.css'
 import Admin from './Admin.jsx'
 
@@ -11,6 +11,7 @@ const SCORE_LABELS = {
 }
 
 const SCORE_MAX = 40
+const POLL_MS = 30_000
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -188,6 +189,10 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [sortBy, setSortBy] = useState('rank')
   const [selectedId, setSelectedId] = useState(null)
+  const [ingestStatus, setIngestStatus] = useState(null)
+  const [ingesting, setIngesting] = useState(false)
+  const [lastIngestMsg, setLastIngestMsg] = useState(null)
+  const ingestingRef = useRef(false)
 
   const latestDate = runs[0]?.date ?? null
 
@@ -200,30 +205,132 @@ export default function App() {
     setSelectedDate(json.date)
   }, [])
 
+  const loadRuns = useCallback(async (date) => {
+    const res = await fetch(`/api/runs?t=${Date.now()}`)
+    if (!res.ok) throw new Error('API unavailable — is the server running?')
+    const list = await res.json()
+    setRuns(list)
+    if (list.length === 0) {
+      setRun(null)
+      return
+    }
+    const target = date && list.some(r => r.date === date) ? date : undefined
+    await loadRun(target)
+  }, [loadRun])
+
+  const checkIngestStatus = useCallback(async () => {
+    const res = await fetch('/api/ingest/status')
+    if (!res.ok) return null
+    const status = await res.json()
+    setIngestStatus(status)
+    return status
+  }, [])
+
+  const doIngest = useCallback(async (date) => {
+    if (ingestingRef.current) return
+    ingestingRef.current = true
+    setIngesting(true)
+    setLastIngestMsg(null)
+    try {
+      const res = await fetch('/api/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Ingest failed')
+      if (data.skipped) {
+        setLastIngestMsg('Already up to date')
+      } else {
+        setLastIngestMsg(`Ingested ${data.ideaCount} ideas · ${formatDateLabel(data.date)}`)
+      }
+      await loadRuns(date)
+      await checkIngestStatus()
+      setError(null)
+    } catch (e) {
+      setLastIngestMsg(null)
+      setError(e.message)
+    } finally {
+      ingestingRef.current = false
+      setIngesting(false)
+    }
+  }, [loadRuns, checkIngestStatus])
+
   const refresh = useCallback(async (date) => {
     try {
-      const res = await fetch(`/api/runs?t=${Date.now()}`)
-      if (!res.ok) throw new Error('API unavailable — is the server running?')
-      const list = await res.json()
-      setRuns(list)
-      if (list.length === 0) {
-        setRun(null)
-        setError(null)
-        return
-      }
-      const target = date && list.some(r => r.date === date) ? date : undefined
-      await loadRun(target)
+      setLoading(true)
+      await loadRuns(date)
       setError(null)
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [loadRun])
+  }, [loadRuns])
 
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    let cancelled = false
+    async function init() {
+      setLoading(true)
+      try {
+        const statusRes = await fetch('/api/ingest/status')
+        const status = statusRes.ok ? await statusRes.json() : null
+        if (cancelled) return
+        if (status) setIngestStatus(status)
+        if (status?.hasNewData) {
+          if (ingestingRef.current) return
+          ingestingRef.current = true
+          setIngesting(true)
+          try {
+            const ingestRes = await fetch('/api/ingest', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: '{}',
+            })
+            const data = await ingestRes.json()
+            if (!ingestRes.ok) throw new Error(data.error || 'Ingest failed')
+            if (!data.skipped) {
+              setLastIngestMsg(`Ingested ${data.ideaCount} ideas · ${formatDateLabel(data.date)}`)
+            }
+            await loadRuns()
+            const s = await fetch('/api/ingest/status')
+            if (s.ok) setIngestStatus(await s.json())
+          } finally {
+            ingestingRef.current = false
+            setIngesting(false)
+          }
+        } else {
+          await loadRuns()
+        }
+        setError(null)
+      } catch (e) {
+        if (!cancelled) setError(e.message)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    init()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (view !== 'dashboard') return undefined
+    const id = setInterval(async () => {
+      try {
+        const statusRes = await fetch('/api/ingest/status')
+        if (!statusRes.ok) return
+        const status = await statusRes.json()
+        setIngestStatus(status)
+        if (status.hasNewData && !ingestingRef.current) {
+          await doIngest(selectedDate)
+        }
+      } catch {
+        // ignore poll errors
+      }
+    }, POLL_MS)
+    return () => clearInterval(id)
+  }, [view, doIngest, selectedDate])
 
   const handleSelect = useCallback(async (date) => {
     try {
@@ -271,6 +378,12 @@ export default function App() {
                 {selectedDate
                   ? <>{formatDateLabel(selectedDate)} · {ideas.length} ideas{isLatest && <span className={styles.updated}> · current</span>}</>
                   : 'No runs yet'}
+                {ingestStatus?.hasNewData && (
+                  <span className={styles.newDataHint}> · New Cowork data available</span>
+                )}
+                {lastIngestMsg && !ingestStatus?.hasNewData && (
+                  <span className={styles.updated}> · {lastIngestMsg}</span>
+                )}
               </p>
             )}
           </div>
@@ -299,6 +412,14 @@ export default function App() {
                 {!isLatest && latestDate && (
                   <button type="button" className={styles.refreshBtn} onClick={() => handleSelect(latestDate)}>Current</button>
                 )}
+                <button
+                  type="button"
+                  className={`${styles.ingestBtn} ${ingestStatus?.hasNewData ? styles.ingestBtnPending : ''}`}
+                  onClick={() => doIngest(selectedDate)}
+                  disabled={ingesting}
+                >
+                  {ingesting ? 'Ingesting…' : 'Ingest'}
+                </button>
                 <button type="button" className={styles.refreshBtn} onClick={() => refresh(selectedDate)}>↻ Refresh</button>
               </>
             )}
@@ -358,7 +479,7 @@ export default function App() {
             {loading && <p className={styles.empty}>Loading…</p>}
             {!loading && error && <p className={styles.empty}>{error}</p>}
             {!loading && !error && runs.length === 0 && (
-              <p className={styles.empty}>No runs yet. Run <code>node scripts/ingest.js</code> after a Cowork run.</p>
+              <p className={styles.empty}>No runs yet. Click <strong>Ingest</strong> after a Cowork run.</p>
             )}
             {!loading && !error && runs.length > 0 && filtered.length === 0 && (
               <p className={styles.empty}>No ideas match your search.</p>

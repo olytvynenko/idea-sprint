@@ -59,6 +59,31 @@
   cursor: pointer;
 }
 .refreshBtn:hover { border-color: var(--border-strong); color: var(--text); }
+.ingestBtn {
+  position: relative;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+.ingestBtn:hover:not(:disabled) { background: var(--accent); color: #fff; }
+.ingestBtn:disabled { opacity: 0.6; cursor: default; }
+.ingestBtnPending::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--score-mid);
+  border: 2px solid var(--surface);
+}
+.newDataHint { color: var(--score-mid); }
 
 .score_high { color: var(--score-high); }
 .score_mid  { color: var(--score-mid); }

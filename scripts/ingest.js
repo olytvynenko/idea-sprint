@@ -7,6 +7,7 @@ import { parseShortlistTable, slugify } from './parse-shortlist.js'
 
 const SHORTLIST_PATH = path.join(ROOT, 'data/shortlist.md')
 const SNAPSHOTS_DIR = path.join(ROOT, 'data/snapshots')
+const DAILY_DIR = path.join(ROOT, 'data/daily')
 
 function readIfExists(p) {
   try {
@@ -92,7 +93,74 @@ function backfillSnapshots(db) {
   return imported
 }
 
-export function ingest({ date } = {}) {
+export function resolveRunDate(explicitDate) {
+  if (explicitDate) return explicitDate
+
+  if (fs.existsSync(DAILY_DIR)) {
+    const dates = fs.readdirSync(DAILY_DIR)
+      .filter(f => f.endsWith('.md'))
+      .map(f => f.replace('.md', ''))
+      .filter(date => {
+        try {
+          return fs.readFileSync(path.join(DAILY_DIR, `${date}.md`), 'utf8').trim().length > 0
+        } catch {
+          return false
+        }
+      })
+      .sort()
+    if (dates.length > 0) return dates[dates.length - 1]
+  }
+
+  return new Date().toISOString().slice(0, 10)
+}
+
+export function getIngestStatus({ date } = {}) {
+  const runDate = resolveRunDate(date)
+  let shortlistUpdated = null
+  let ideaCount = 0
+
+  try {
+    if (fs.existsSync(SHORTLIST_PATH)) {
+      shortlistUpdated = fs.statSync(SHORTLIST_PATH).mtime.toISOString()
+      const content = readIfExists(SHORTLIST_PATH)
+      if (content) ideaCount = parseShortlistTable(content).length
+    }
+  } catch {
+    // leave defaults
+  }
+
+  let dbUpdated = null
+  try {
+    const db = openDb({ readonly: true })
+    try {
+      const row = db.prepare('SELECT created_at FROM runs WHERE run_date = ?').get(runDate)
+      dbUpdated = row?.created_at ?? null
+    } finally {
+      db.close()
+    }
+  } catch {
+    // DB may not exist yet
+  }
+
+  const hasNewData = ideaCount > 0 && (
+    !dbUpdated ||
+    (shortlistUpdated && new Date(shortlistUpdated) > new Date(dbUpdated))
+  )
+
+  return { runDate, shortlistUpdated, dbUpdated, ideaCount, hasNewData }
+}
+
+export function ingest({ date, force = false } = {}) {
+  const status = getIngestStatus({ date })
+  if (!force && !status.hasNewData) {
+    if (status.ideaCount === 0) {
+      console.log('[ingest] no parseable ideas in shortlist — skipping')
+      return null
+    }
+    console.log(`[ingest] already up to date for ${status.runDate}`)
+    return { date: status.runDate, ideaCount: status.ideaCount, skipped: true }
+  }
+
   const db = openDb()
   try {
     const backfilled = backfillSnapshots(db)
@@ -101,17 +169,18 @@ export function ingest({ date } = {}) {
     const content = readIfExists(SHORTLIST_PATH)
     if (!content) {
       console.log('[ingest] no data/shortlist.md found — nothing to ingest for today')
-      return
+      return null
     }
     const ideas = parseShortlistTable(content)
     if (ideas.length === 0) {
       console.log('[ingest] data/shortlist.md has no parseable ideas — skipping today')
-      return
+      return null
     }
 
-    const runDate = date || new Date().toISOString().slice(0, 10)
+    const runDate = resolveRunDate(date)
     upsertRun(db, { date: runDate, ideas, source: 'shortlist' })
     console.log(`[ingest] stored run ${runDate} — ${ideas.length} idea(s)`)
+    return { date: runDate, ideaCount: ideas.length, skipped: false }
   } finally {
     db.close()
   }

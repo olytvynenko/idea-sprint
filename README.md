@@ -83,8 +83,13 @@ dated run, so history is kept. Data flow:
 data/shortlist.md  →  node scripts/ingest.js  →  data/idea-sprint.db  →  Express API (:4001)  →  dashboard
 ```
 
-The dashboard reads the API directly, so a new run shows up after the next
-ingest (use the Refresh button) — no rebuild needed.
+The dashboard reads the API directly:
+
+- **Ingest** — imports the latest `data/shortlist.md` into SQLite (run date from the newest daily digest)
+- **Refresh** — reloads the view from the database without re-importing
+- While the dashboard is open, it checks every 30 seconds and auto-ingests when Cowork output is newer than the DB
+
+No rebuild needed after a Cowork run.
 
 ### Prerequisites
 
